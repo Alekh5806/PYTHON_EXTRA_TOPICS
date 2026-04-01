@@ -1,0 +1,51 @@
+import smtplib
+import os
+import mimetypes
+from email.message import EmailMessage
+from dotenv import load_dotenv
+
+# 1. Load your hidden credentials
+load_dotenv()
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
+
+# 2. Set up the basic email info
+receiver_email = "24012011070@gnu.ac.in" 
+
+# 3. Create the EmailMessage object
+msg = EmailMessage()
+msg['Subject'] = "Check out this file from Python!"
+msg['From'] = EMAIL_ADDRESS
+msg['To'] = receiver_email
+
+# Add the standard text body
+msg.set_content("Hello! I have attached a file to this email for you to review.")
+
+# 4. Prepare the attachment
+file_path = "/Users/alekh/Desktop/python home /sample.txt" # <-- Change this to your actual file's name
+
+# Python needs to tell the email server what kind of file this is (PDF, JPEG, TXT, etc.)
+# mimetypes guesses this automatically based on the file extension.
+mime_type, _ = mimetypes.guess_type(file_path)
+if mime_type is None:
+    mime_type = "application/octet-stream" # A safe fallback for unknown file types
+main_type, sub_type = mime_type.split('/', 1)
+
+# Open the file in "read binary" mode ('rb') so Python can read the raw data
+with open(file_path, "rb") as f:
+    file_data = f.read()
+    file_name = os.path.basename(f.name) # Extracts just the name (e.g., 'document.pdf')
+
+# Add the raw data to the email message
+msg.add_attachment(file_data, maintype=main_type, subtype=sub_type, filename=file_name)
+
+# 5. Connect and Send!
+print("Connecting to server...")
+with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+    smtp.starttls()
+    smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+    
+    # IMPORTANT: We use send_message() here instead of sendmail()
+    smtp.send_message(msg) 
+
+print("Email with attachment sent successfully!")
